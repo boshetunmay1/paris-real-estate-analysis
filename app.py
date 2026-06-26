@@ -10,9 +10,7 @@ from statsmodels.tsa.arima.model import ARIMA
 
 warnings.filterwarnings("ignore")
 
-# ─────────────────────────────────────────────
 # НАСТРОЙКИ СТРАНИЦЫ
-# ─────────────────────────────────────────────
 st.set_page_config(
     page_title="Paris Housing Analytics",
     page_icon="🏠",
@@ -20,9 +18,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# ─────────────────────────────────────────────
 # CSS
-# ─────────────────────────────────────────────
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
@@ -85,9 +81,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
-# ─────────────────────────────────────────────
 # ЗАГРУЗКА ДАННЫХ И МОДЕЛЕЙ
-# ─────────────────────────────────────────────
 @st.cache_data
 def load_data():
     df = pd.read_csv("data/ParisHousing_clean.csv")
@@ -96,7 +90,7 @@ def load_data():
 
 @st.cache_resource
 def load_lgbm():
-    model       = joblib.load("models/lightgbm_model.pkl")
+    model = joblib.load("models/lightgbm_model.pkl")
     feature_cols = joblib.load("models/feature_cols.pkl")
     return model, feature_cols
 
@@ -115,13 +109,10 @@ except Exception as e:
     st.error(f"Ошибка загрузки файлов: {e}\n\nПроверь структуру папок: data/ и models/")
     st.stop()
 
-
-# ─────────────────────────────────────────────
 # ШАПКА
-# ─────────────────────────────────────────────
 st.markdown("""
 <div class="main-header">
-    <h1>🏠 Paris Housing Analytics</h1>
+    <h1>Paris Housing Analytics</h1>
     <p>Анализ рынка недвижимости · LightGBM · ARIMA · 101 объект · 17 признаков</p>
 </div>
 """, unsafe_allow_html=True)
@@ -145,27 +136,22 @@ for col, label, value, sub in metrics:
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# ─────────────────────────────────────────────
 # ВКЛАДКИ
-# ─────────────────────────────────────────────
 tab1, tab2, tab3 = st.tabs([
-    "📊  Анализ данных",
-    "🏠  Оценить квартиру",
-    "📈  Прогноз рынка",
+    "Анализ данных",
+    "Оценить квартиру",
+    "Прогноз рынка",
 ])
 
 sns.set_style("whitegrid")
 FMT = mticker.FuncFormatter(lambda x, _: f"{x/1e6:.1f}M")
 
-
-# ═══════════════════════════════════════════════════════════
-# ВКЛАДКА 1 — EDA
-# ═══════════════════════════════════════════════════════════
+# ВКЛАДКА 1 EDA
 with tab1:
-    st.markdown("### Исследовательский анализ данных")
+    st.markdown("Исследовательский анализ данных")
 
-    # ── Распределение price ──────────────────────────────────
-    st.markdown("#### Распределение целевой переменной — цена (€)")
+    #Распределение price
+    st.markdown("Распределение целевой переменной цена (€)")
     fig, axes = plt.subplots(1, 2, figsize=(13, 4))
 
     axes[0].hist(df["price"], bins=25, color="#0f3460", edgecolor="white", alpha=0.85)
@@ -185,7 +171,7 @@ with tab1:
     plt.tight_layout()
     st.pyplot(fig); plt.close()
 
-    # ── Корреляция ───────────────────────────────────────────
+    # Корреляция
     st.markdown("#### Матрица корреляций (Пирсон)")
     quant_cols = ["squareMeters","price","numberOfRooms","floors",
                   "basement","attic","garage","numPrevOwners"]
@@ -200,7 +186,7 @@ with tab1:
     plt.tight_layout()
     st.pyplot(fig); plt.close()
 
-    # ── Средняя цена по бинарным признакам ──────────────────
+    #Средняя цена по бинарным признакам
     st.markdown("#### Средняя цена по характеристикам объекта")
     binary_cols = ["hasPool","hasYard","isNewBuilt","hasStormProtector","hasStorageRoom"]
     labels_ru   = ["Бассейн","Двор","Новостройка","Защита от непогоды","Кладовая"]
@@ -224,7 +210,7 @@ with tab1:
     plt.tight_layout()
     st.pyplot(fig); plt.close()
 
-    # ── Диаграмма рассеяния squareMeters vs price ────────────
+    #Диаграмма рассеяния squareMeters vs price
     st.markdown("#### Ключевая зависимость: площадь vs цена")
     fig, ax = plt.subplots(figsize=(10, 5))
     ax.scatter(df["squareMeters"], df["price"], alpha=0.6,
@@ -232,25 +218,22 @@ with tab1:
     m, b = np.polyfit(df["squareMeters"], df["price"], 1)
     x_l  = np.linspace(df["squareMeters"].min(), df["squareMeters"].max(), 200)
     ax.plot(x_l, m*x_l+b, color="#e94560", linewidth=2.5, label=f"Тренд  r = 1.000")
-    ax.set_xlabel("Площадь (м²)"); ax.set_ylabel("Цена (€)")
+    ax.set_xlabel("Площадь м²"); ax.set_ylabel("Цена €")
     ax.yaxis.set_major_formatter(FMT)
     ax.set_title("squareMeters vs price  (r = 1.000)", fontsize=13, fontweight="bold")
     ax.legend()
     plt.tight_layout()
     st.pyplot(fig); plt.close()
 
-
-# ═══════════════════════════════════════════════════════════
-# ВКЛАДКА 2 — ПРЕДСКАЗАНИЕ ЦЕНЫ
-# ═══════════════════════════════════════════════════════════
+# ВКЛАДКА 2 ПРЕДСКАЗАНИЕ ЦЕНЫ
 with tab2:
-    st.markdown("### 🏠 Оценка стоимости объекта")
+    st.markdown("###Оценка стоимости объекта")
     st.markdown(
         "Заполни параметры квартиры — модель **LightGBM** рассчитает "
         "прогнозную рыночную цену на основе обучающей выборки."
     )
     st.info(
-        "💡 **Ключевой фактор:** площадь объекта определяет цену "
+        "**Ключевой фактор:** площадь объекта определяет цену "
         "практически линейно (r = 1.000). Остальные параметры дают "
         "тонкую корректировку.",
         icon=None
@@ -277,14 +260,14 @@ with tab2:
 
     with col_r:
         st.markdown("**Дополнительные опции**")
-        pool   = st.checkbox("🏊 Бассейн")
-        yard   = st.checkbox("🌿 Двор")
-        new_b  = st.checkbox("🏗️ Новостройка")
-        storm  = st.checkbox("⛈️ Защита от непогоды")
-        stor   = st.checkbox("📦 Кладовая")
+        pool   = st.checkbox("Бассейн")
+        yard   = st.checkbox("Двор")
+        new_b  = st.checkbox("Новостройка")
+        storm  = st.checkbox("Защита от непогоды")
+        stor   = st.checkbox("Кладовая")
 
         st.markdown("<br>", unsafe_allow_html=True)
-        predict_btn = st.button("💰 Рассчитать стоимость",
+        predict_btn = st.button("Рассчитать стоимость",
                                 use_container_width=True, type="primary")
 
         if predict_btn:
@@ -331,19 +314,16 @@ with tab2:
             <div style="background:#f8f9ff; border:2px dashed #c5cff5;
                         border-radius:12px; padding:3rem 2rem;
                         text-align:center; color:#8a9bb0; margin-top:1rem;">
-                <div style="font-size:2.5rem">🏷️</div>
+                <div style="font-size:2.5rem"></div>
                 <div style="font-weight:600; margin-top:0.5rem;">
                     Заполни параметры и нажми кнопку
                 </div>
             </div>
             """, unsafe_allow_html=True)
 
-
-# ═══════════════════════════════════════════════════════════
 # ВКЛАДКА 3 — ARIMA ПРОГНОЗ
-# ═══════════════════════════════════════════════════════════
 with tab3:
-    st.markdown("### 📈 Прогноз рынка — временной ряд ARIMA(0,0,1)")
+    st.markdown("### Прогноз рынка — временной ряд ARIMA(0,0,1)")
     st.markdown(
         "Временной ряд построен на основе **средней цены объектов "
         "по году их постройки** (1990–2021). Модель ARIMA(0,0,1) "
@@ -427,14 +407,10 @@ with tab3:
       модель предсказывает возврат к среднему, а не конкретные скачки цен
     """)
 
-# ─────────────────────────────────────────────
-# ПОДВАЛ
-# ─────────────────────────────────────────────
 st.divider()
 st.markdown(
     "<div style='text-align:center; color:#aaa; font-size:0.8rem;'>"
     "Paris Housing Analytics · LightGBM + ARIMA · "
-    "Курсовая работа по анализу данных"
     "</div>",
     unsafe_allow_html=True
 )
