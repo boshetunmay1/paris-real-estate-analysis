@@ -52,7 +52,7 @@
 
 1. Склонируйте репозиторий:
    ```bash
-   git clone [https://github.com/ВАШ_NICKNAME/paris-real-estate-analysis.git](https://github.com/boshetunmay1/paris-real-estate-analysis.git)
+   git clone [https://github.com/boshetunmay1/paris-real-estate-analysis.git](https://github.com/boshetunmay1/paris-real-estate-analysis.git)
    cd paris-real-estate-analysis
 
 2. Установите зависимости:
